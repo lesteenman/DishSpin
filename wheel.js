@@ -25,8 +25,8 @@ $(window).resize(resize);
 window.initialValues = function() {
 	window.currentRotation = 0;
 	window.acceleration = 25;
-	window.friction = 15;
-	window.frictionMult = 250; // How friction is affected by speed
+	window.friction = 60;
+	window.frictionMult = 350; // How friction is affected by speed
 	window.speed = 0.5;
 	window.stopped = false;
 	window.started = false;
