@@ -32,6 +32,8 @@ window.initialValues = function() {
 	window.started = false;
 	window.sling = false;
 	window.foundPrediction = false;
+
+	window.predictions = [];
 }
 
 initialValues();
@@ -70,6 +72,16 @@ function initialize() {
 }
 
 function startSpinner() {
+	if (localStorage !== undefined) {
+		for (var r = 0; r < rooms.length; r++) {
+			var room = rooms[r];
+			if (!!localStorage.getItem('select-'+room)) {
+				predictions.push(+room);
+			}
+		}
+	}
+	console.log('Predictions:', predictions);
+
 	started = true;
 	stopped = false;
 	sling = Math.random() * 550 + 500;
@@ -94,7 +106,6 @@ function finish() {
 }
 
 var last = null;
-var predictions = [];
 var lastSection = currentWinner();
 
 function tick(time) {
@@ -118,11 +129,13 @@ function tick(time) {
 	} else if (started && !foundPrediction) {
 		acceleration = -friction;
 		if (predictions.length) {
-			var r = predictEnd(currentRotation);
-			// var r2 = predictEnd(currentRotation - 5);
-			// var r3 = predictEnd(currentRotation + 5);
+			var r1 = rooms[predictEnd(currentRotation)];
+			var r2 = rooms[predictEnd(currentRotation - 5)];
+			var r3 = rooms[predictEnd(currentRotation + 5)];
 			acceleration = 0;
-			if (predictions.indexOf(r) >= 0) {
+			if (predictions.indexOf(r1) >= 0 &&
+				predictions.indexOf(r2) >= 0 &&
+				predictions.indexOf(r3) >= 0) {
 				acceleration = -friction;
 				foundPrediction = true;
 			}

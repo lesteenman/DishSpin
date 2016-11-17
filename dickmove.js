@@ -7,7 +7,7 @@ $(document).ready(function() {
 	var rooms = [101,102,103,104,105,106,107,211,212,213,214,215,216,217];
 	for (var r = 0; r < rooms.length; r++) {
 		(function(r) {
-			var ls = 'select-' + r;
+			var ls = 'select-' + rooms[r];
 			var room = rooms[r];
 			var label = document.createElement("LABEL");
 			var toggle = document.createElement("INPUT");

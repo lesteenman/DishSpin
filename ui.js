@@ -2,7 +2,7 @@ var rooms1Div = $('#row1')[0];
 var rooms2Div = $('#row2')[0];
 var rooms1 = [101,102,103,104,105,106,107];
 var rooms2 = [211,212,213,214,215,216,217];
-window.rooms = [101, 102];
+window.rooms = [];
 
 function initialize() {
 	// Create buttons
