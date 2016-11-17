@@ -170,20 +170,30 @@ function tick(time) {
 	requestAnimationFrame(tick);
 }
 
+var lastRoomCount = 0;
+var colorScheme = [];
+
 window.drawWheel = function() {
 	ctx.clearRect(0, 0, baseSize, baseSize);
 
-	var slices = rooms.length;
-	var colorCount = color.length;
-	if (rooms.length % colorCount == 1) {
-		colorCount -= 1;
+	if (lastRoomCount != rooms.length) {
+		lastRoomCount = rooms.length;
+		for (var c = 0; c < colorSchemes.length; c++) {
+			if (rooms.length % colorSchemes[c].length == 0) {
+				colorScheme = colorSchemes[c];
+				break;
+			}
+		}
 	}
+	var colorCount = colorScheme.length;
+
+	var slices = rooms.length;
 	sliceDeg = 360/slices;
 
 	var deg = currentRotation;
 	for(var i=0; i<slices; i++){
 		// console.log('drawing', deg, deg+sliceDeg, rooms[i]);
-		drawWheelSlice(deg, color[i%colorCount]);
+		drawWheelSlice(deg, colorScheme[i%colorCount]);
 		drawWheelText(deg+sliceDeg/2, window.rooms[i]);
 		deg -= sliceDeg;
 	}
@@ -199,6 +209,13 @@ window.drawWheel = function() {
 initialize();
 
 // Basically stolen from StackOverflow
+
+var colorSchemes = [
+	['#3f51b5', '#f44336', '#009688'],
+	['#3f51b5', '#f44336', '#009688', '#cddc39'],
+	['#3f51b5', '#f44336', '#009688', '#cddc39', '#ff9800'],
+	['#3f51b5', '#f44336', '#009688', '#cddc39', '#ff9800', '#ffeb3b', '#607d8b'],
+];
 
 var color    = ['#ef6b00', '#356de0', '#FF4F38', '#46C9A2', '#EC368D', '#35E0E0'];
 var size  = Math.min(canvas.width, canvas.height); // size TODO: Keep room for UI in mind
