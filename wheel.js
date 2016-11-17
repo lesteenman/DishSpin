@@ -1,24 +1,65 @@
+// TODO: Better colors
+
+
 var overlay = $('#overlay')[0];
 var canvas = $('#wheel')[0];
 var ctx = canvas.getContext("2d");
+
 var baseSize = Math.min(document.body.clientHeight, document.body.clientWidth);
 
-window.currentRotation = 0;
-window.acceleration = 2;
-window.friction = 3;
-window.speed = 0.5;
-window.stopped = false;
-window.started = false;
-window.sling = false;
-
 function resize() {
-	var size = Math.min(document.body.clientHeight, document.body.clientWidth);
-	// var windowRatio = document.body.clientHeight / document.body.clientWidth;
-	$(canvas).css('width', size + 'px')
-	$(canvas).css('height', size + 'px')
+	var height = document.body.clientHeight;
+	var width = document.body.clientWidth;
+	var size = Math.min(height, width);
+	$(canvas).css({
+		position: 'absolute',
+		top: height > width ? (height - size) / 2 + 'px' : '',
+		left: width > height ? (width - size) / 2 + 'px' : '',
+		width: size + 'px',
+		height: size + 'px',
+	});
 }
 
 $(window).resize(resize);
+
+window.initialValues = function() {
+	window.currentRotation = 0;
+	window.acceleration = 25;
+	window.friction = 15;
+	window.frictionMult = 250; // How friction is affected by speed
+	window.speed = 0.5;
+	window.stopped = false;
+	window.started = false;
+	window.sling = false;
+	window.foundPrediction = false;
+}
+
+initialValues();
+
+function nextSpeed(speed, dt) {
+	var currentFriction = 1 + speed / frictionMult;
+	speed += acceleration * currentFriction * dt;
+	return speed;
+}
+
+function nextRotation(speed, rotation, dt) {
+	rotation += speed * dt;
+	rotation %= 360;
+	return rotation;
+}
+
+function predictEnd(deg) {
+	var speed = window.speed;
+	var rotation = deg;
+	var t = 0;
+	var dt = 1/200;
+	while (speed > 0) {
+		speed = nextSpeed(speed, dt);
+		rotation = nextRotation(speed, rotation, dt);
+		t += dt;
+	}
+	return winningSlice(rotation);
+}
 
 function initialize() {
 	$(canvas).prop('width', baseSize)
@@ -30,15 +71,31 @@ function initialize() {
 
 function startSpinner() {
 	started = true;
-	sling = 2000; // Math.random(500, 2000);
 	stopped = false;
-	acceleration = 10;
-	// setTimeout(function() {
-	// 	acceleration = -0.5;
-	// }, 200);
+	sling = Math.random() * 550 + 500;
+	acceleration = 500;
+}
+
+window.currentWinner = function() {
+	return winningSlice(currentRotation);
+}
+
+window.winningSlice = function(deg) {
+	deg = deg + 90;
+	if (deg > 360) deg -= 360;
+	sliceDeg = 360/rooms.length;
+	return (1 + Math.floor(deg / sliceDeg)) % rooms.length;
+}
+
+function finish() {
+	var winner = winningSlice(currentRotation); // -(Math.ceil(currentRotation / 360 * rooms.length) - 1) % rooms.length;
+	showWinner();
+	// console.log('winner:', winner, rooms[winner]);
 }
 
 var last = null;
+var predictions = [];
+var lastSection = currentWinner();
 
 function tick(time) {
 	if (rooms.length <= 1) {
@@ -47,30 +104,54 @@ function tick(time) {
 	}
 
 	if (last === null) last = time;
-	var td = (time - last) / 1000;
+	var dt = (time - last) / 1000;
 	last = time;
 
-	if (sling && speed > sling) {
-		sling = false;
-		acceleration = -1 / friction;
+	// TODO: Correct for close predictions
+
+	// Update acceleration and see if the wheel has stopped
+	if (sling) {
+		if (speed > sling) {
+			sling = false;
+			acceleration = 0
+		}
+	} else if (started && !foundPrediction) {
+		acceleration = -friction;
+		if (predictions.length) {
+			var r = predictEnd(currentRotation);
+			// var r2 = predictEnd(currentRotation - 5);
+			// var r3 = predictEnd(currentRotation + 5);
+			acceleration = 0;
+			if (predictions.indexOf(r) >= 0) {
+				acceleration = -friction;
+				foundPrediction = true;
+			}
+		} else {
+			foundPrediction = true;
+		}
 	} else if (!started && speed > 120) {
 		acceleration = 0;
 	} else if (speed <= 0 && started) {
 		speed = 0;
 		stopped = true;
 		started = false;
-		return;
+
+		finish();
 	}
 
-	// Linear deceleration from this point on
-	if (started && speed < 50) {
-		speed -= friction * td;
-	} else {
-		speed += (speed * acceleration) * td;
+	if (!stopped) {
+		speed = nextSpeed(speed, dt);
+		currentRotation = nextRotation(speed, currentRotation, dt);
 	}
 
-	currentRotation += speed * td;
-	currentRotation %= 360;
+	var section = currentWinner();
+	if (section != lastSection) {
+		lastSection = section;
+		if (started) {
+			var click = new Audio("click.mp3");
+			click.play();
+		}
+	}
 
 	drawWheel();
 	requestAnimationFrame(tick);
@@ -80,21 +161,33 @@ window.drawWheel = function() {
 	ctx.clearRect(0, 0, baseSize, baseSize);
 
 	var slices = rooms.length;
+	var colorCount = color.length;
+	if (rooms.length % colorCount == 1) {
+		colorCount -= 1;
+	}
 	sliceDeg = 360/slices;
 
 	var deg = currentRotation;
 	for(var i=0; i<slices; i++){
-		drawWheelSlice(deg, color[i%2]);
+		// console.log('drawing', deg, deg+sliceDeg, rooms[i]);
+		drawWheelSlice(deg, color[i%colorCount]);
 		drawWheelText(deg+sliceDeg/2, window.rooms[i]);
-		deg += sliceDeg;
+		deg -= sliceDeg;
 	}
+	for(var i=0; i<slices; i++){
+		strokeWheelSlice(deg);
+		deg -= sliceDeg;
+	}
+
+	drawPointer();
+	// debugger;
 }
 
 initialize();
 
 // Basically stolen from StackOverflow
 
-var color    = ['#ef6b00', '#356de0'];
+var color    = ['#ef6b00', '#356de0', '#FF4F38', '#46C9A2', '#EC368D', '#35E0E0'];
 var size  = Math.min(canvas.width, canvas.height); // size TODO: Keep room for UI in mind
 var center = size/2;      // center
 var sliceDeg;
@@ -102,12 +195,33 @@ size -= size/10;
 
 function deg2rad(deg){ return deg * Math.PI/180; }
 
-function drawWheelSlice(deg, color){
+function drawPointer() {
 	ctx.beginPath();
-	ctx.fillStyle = color;
+	ctx.moveTo(center - 10, 0);
+	ctx.lineTo(center + 10, 0);
+	ctx.lineTo(center, baseSize / 10);
+	ctx.lineTo(center - 10, 0);
+	ctx.fillStyle = 'black';
+	ctx.fill();
+}
+
+function strokeWheelSlice(deg) {
+	ctx.beginPath();
 	ctx.moveTo(center, center);
 	ctx.arc(center, center, size/2, deg2rad(deg), deg2rad(deg+sliceDeg));
 	ctx.lineTo(center, center);
+	ctx.lineWidth = baseSize / 100;
+	ctx.strokeStyle = '#333';
+	ctx.stroke();
+}
+
+function drawWheelSlice(deg, color) {
+	ctx.beginPath();
+	ctx.moveTo(center, center);
+	ctx.arc(center, center, size/2, deg2rad(deg), deg2rad(deg+sliceDeg));
+	ctx.lineTo(center, center);
+	ctx.lineWidth = baseSize / 100;
+	ctx.fillStyle = color;
 	ctx.fill();
 }
 

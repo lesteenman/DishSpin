@@ -1,3 +1,7 @@
+* {
+	box-sizing: border-box;
+}
+
 body {
 	position: absolute;
 	top: 0;
@@ -15,11 +19,13 @@ body {
 	bottom: 0;
 	z-index: 5;
 	background-color: rgba(0,0,0,0.4);
+	transition: opacity 350ms;
 }
 
 #wheel {
 	width: 100%;
 	height: 100%;
+	transition: opacity 350ms;
 }
 
 #ui {
@@ -32,45 +38,61 @@ body {
 }
 
 #buttons {
-	margin: 0 10%;
-	display: table;
+	padding: 0 10px;
 	border-collapse: collapse;
-}
-
-.room-row {
-	display: table-row;
-	height: 100px;
 	width: 100%;
+	max-width: 100%;
+	text-align: center;
 }
 
 .room-button {
+	display: inline-block;
 	background-color: white;
 	color: #ef6b00;
 	font-weight: bold;
+	min-width: 50px;
 	width: 10vw;
-	text-align: center;
-	display: table-cell;
-	border: 3px solid black;
-	vertical-align: middle;
-	cursor: pointer;
+	height: 50px;
+	line-height: 50px;
+	margin: 5px;
 }
 
-.room-button.selected {
-	background-color: #ef6b00;
-	color: white;
+.room-button .status-light {
+	margin: 10px auto;
+	width: 2vw;
+	height: 2vw;
+	background-color: #aaa;
+	border-radius: 50%;
+	transition: background-color 300ms;
+}
+
+.room-button.selected .status-light {
+	background-color: green;
 }
 
 #spin-now {
-	color: white;
-	vertical-align: middle;
 	margin-left: 50%;
 	margin-top: 20px;
 	transform: translateX(-50%);
-	width: 100px;
-	height: 50px;
-	line-height: 50px;
+}
+
+#done {
+	display: none;
+	margin-top: 50%;
+	transform: translateY(-50%);
 	text-align: center;
-	background-color: #356de0;
-	border: 3px solid white;
-	cursor: pointer;
+}
+
+#done #winner {
+	font-size: 25vw;
+	color: white;
+	font-weight: bold;
+	visibility: hidden;
+}
+
+#done #congratulate {
+	font-size: 10vw;
+	color: white;
+	font-weight: bold;
+	visibility: hidden;
 }
