@@ -4,6 +4,8 @@ var rooms1 = [101,102,103,104,105,106,107];
 var rooms2 = [211,212,213,214,215,216,217];
 window.rooms = [];
 
+var messages = ['Hah! Anal!'];
+
 function initialize() {
 	// Create buttons
 	var rows = [rooms1, rooms2];
@@ -54,6 +56,13 @@ function showWinner() {
 	console.log('Winner:', currentRotation, winningSlice(currentRotation), rooms[winningSlice(currentRotation)]);
 	$('#ui').css('display', 'none');
 	$('#done #winner').text(rooms[winningSlice(currentRotation)]);
+	if (Math.random() > 0.9) {
+		$('#done #congratulate').text(messages[Math.floor(Math.random() * messages.length)]);
+	// if (rooms[winningSlice(currentRotation)] == 103) {
+	// 	$('#done #congratulate').text('Hah! Anal!');
+	} else {
+		$('#done #congratulate').text('Congratulations');
+	}
 	$('#done').css('display', 'block');
 	$('#overlay').css('opacity', 1);
 
@@ -88,7 +97,7 @@ function setSelected(room, selected) {
 };
 
 function checkWheelValid() {
-	if (rooms.length < 3) {
+	if (rooms.length < 2) {
 		$('#wheel').css('opacity', 0);
 	} else {
 		$('#wheel').css('opacity', 1);
